@@ -1,0 +1,13 @@
+prefix=/Users/abhishekkumbhar/Documents/GitHub/streamlit-dashboard/db_env
+exec_prefix=/Users/abhishekkumbhar/Documents/GitHub/streamlit-dashboard/db_env
+libdir=/Users/abhishekkumbhar/Documents/GitHub/streamlit-dashboard/db_env/lib
+sharedlibdir=/Users/abhishekkumbhar/Documents/GitHub/streamlit-dashboard/db_env/lib
+includedir=/Users/abhishekkumbhar/Documents/GitHub/streamlit-dashboard/db_env/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.13
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}
