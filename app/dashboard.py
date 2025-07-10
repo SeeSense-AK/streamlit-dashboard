@@ -1,15 +1,15 @@
 import streamlit as st
 import pandas as pd
-from app.data import load_data
-from app.ml_models import load_xgb_model, predict_risk
-from app.visualizations import (
+from data import load_data
+from ml_models import load_xgb_model, predict_risk
+from visualizations import (
     create_hotspot_map,
     create_route_map,
     analyze_time_series,
     detect_anomalies,
     create_correlation_heatmap,
 )
-from app.recommendations import generate_safety_recommendations
+from recommendations import generate_safety_recommendations
 
 # Set page config
 st.set_page_config(
