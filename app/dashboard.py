@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go  # Added missing import
+import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 from data import load_data
@@ -175,26 +175,30 @@ with tab2:
         st.markdown('<div class="section-title">Risk Prediction</div>', unsafe_allow_html=True)
         try:
             model = load_xgb_model()
-            X_sample = filtered_routes.sample(min(10, len(filtered_routes)))[['distinct_cyclists', 'popularity_rating', 'avg_speed', 'has_bike_lane']].copy()
-            X_sample['has_bike_lane'] = X_sample['has_bike_lane'].astype(int)
-            predictions = predict_risk(model, X_sample)
-            prediction_df = pd.DataFrame({
-                'Route ID': filtered_routes.loc[X_sample.index, 'route_id'].values,
-                'Distinct Cyclists': X_sample['distinct_cyclists'].values,
-                'Popularity': X_sample['popularity_rating'].values,
-                'Avg. Speed (km/h)': X_sample['avg_speed'].values,
-                'Has Bike Lane': X_sample['has_bike_lane'].values,
-                'Predicted Risk Level': predictions
-            })
-            def color_risk(val):
-                if val >= 7:
-                    return 'background-color: #ffcccc'
-                elif val >= 4:
-                    return 'background-color: #ffffcc'
-                else:
-                    return 'background-color: #ccffcc'
-            styled_predictions = prediction_df.style.applymap(color_risk, subset=['Predicted Risk Level'])
-            st.dataframe(styled_predictions, use_container_width=True)
+            if not filtered_routes.empty:
+                X_sample = filtered_routes[['distinct_cyclists', 'popularity_rating', 'avg_speed', 'has_bike_lane']].copy()
+                X_sample['has_bike_lane'] = X_sample['has_bike_lane'].astype(int)
+                X_sample = X_sample.sample(min(10, len(X_sample)), random_state=42) if len(X_sample) > 10 else X_sample
+                predictions = predict_risk(model, X_sample)
+                prediction_df = pd.DataFrame({
+                    'Route ID': filtered_routes.loc[X_sample.index, 'route_id'].values,
+                    'Distinct Cyclists': X_sample['distinct_cyclists'].values,
+                    'Popularity': X_sample['popularity_rating'].values,
+                    'Avg. Speed (km/h)': X_sample['avg_speed'].values,
+                    'Has Bike Lane': X_sample['has_bike_lane'].values,
+                    'Predicted Risk Level': predictions
+                })
+                def color_risk(val):
+                    if val >= 7:
+                        return 'background-color: #ffcccc'
+                    elif val >= 4:
+                        return 'background-color: #ffffcc'
+                    else:
+                        return 'background-color: #ccffcc'
+                styled_predictions = prediction_df.style.applymap(color_risk, subset=['Predicted Risk Level'])
+                st.dataframe(styled_predictions, use_container_width=True)
+            else:
+                st.warning("No routes available for risk prediction.")
         except Exception as e:
             st.error(f"Error generating risk predictions: {str(e)}")
 
@@ -303,10 +307,10 @@ if st.sidebar.checkbox("Enable Risk Prediction"):
         features["distinct_cyclists"] = st.sidebar.number_input("Distinct Cyclists", min_value=0, value=100)
         features["popularity_rating"] = st.sidebar.slider("Popularity Rating", 0.0, 10.0, 5.0)
         features["avg_speed"] = st.sidebar.number_input("Average Speed (km/h)", min_value=0.0, value=15.0)
-        features["has_bike_lane"] = st.sidebar.radio("Bike Lane Present?", ["Yes", "No"]) == "Yes"
+        features["has_bike_lane"] = 1 if st.sidebar.radio("Bike Lane Present?", ["Yes", "No"]) == "Yes" else 0
         X_pred = pd.DataFrame([features])
         pred = predict_risk(model, X_pred)
-        st.sidebar.success(f"Predicted Risk Level: {pred[0]}")
+        st.sidebar.success(f"Predicted Risk Level: {pred[0]:.2f}")
     except Exception as e:
         st.error(f"Error generating risk prediction: {str(e)}")
 
