@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from data import load_data
 from ml_models import load_xgb_model, predict_risk
-from visualisations import (
+from visualisation import (
     create_hotspot_map,
     create_route_map,
     analyze_time_series,
