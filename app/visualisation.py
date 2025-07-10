@@ -1,13 +1,15 @@
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pydeck as pdk
 from sklearn.ensemble import IsolationForest
-import pandas as pd
-import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
+import numpy as np
 
-def create_hotspot_map(data, color_scale, title, zoom=12):
+def create_hotspot_map(data: pd.DataFrame, color_scale: str = "Viridis", title: str = "Hotspot Map"):
+    if data.empty:
+        return go.Figure().update_layout(title=title, annotations=[dict(text="No data available", showarrow=False)])
     fig = px.scatter_mapbox(
         data,
         lat="lat",
@@ -16,32 +18,20 @@ def create_hotspot_map(data, color_scale, title, zoom=12):
         color="intensity",
         color_continuous_scale=color_scale,
         size_max=20,
-        zoom=zoom,
+        zoom=12,
         mapbox_style="carto-positron",
         hover_name="hotspot_id",
-        hover_data={
-            "lat": False,
-            "lon": False,
-            "intensity": True,
-            "incidents_count": True,
-            "road_type": True
-        },
-        title=title
+        hover_data={"lat": False, "lon": False, "intensity": True, "incidents_count": True, "road_type": True}
     )
     fig.update_layout(
+        title=title,
         margin=dict(l=0, r=0, t=30, b=0),
-        coloraxis_colorbar=dict(
-            title="Intensity",
-            thicknessmode="pixels",
-            thickness=15,
-            lenmode="pixels",
-            len=300
-        ),
+        coloraxis_colorbar=dict(title="Intensity", thicknessmode="pixels", thickness=15, lenmode="pixels", len=300),
         height=600
     )
     return fig
 
-def create_route_map(data, zoom=12):
+def create_route_map(data: pd.DataFrame, zoom: int = 12):
     routes = []
     for _, row in data.iterrows():
         routes.append({
@@ -49,13 +39,8 @@ def create_route_map(data, zoom=12):
             'popularity': float(row['popularity_rating']),
             'cyclists': int(row['distinct_cyclists']),
             'days': int(row['days_active']),
-            'path': [[float(row['start_lon']), float(row['start_lat'])], 
-                    [float(row['end_lon']), float(row['end_lat'])]],
-            'color': [
-                min(255, int(row['popularity_rating'] * 25)),
-                max(100, int(255 - row['popularity_rating'] * 20)),
-                max(50, int(255 - row['popularity_rating'] * 25))
-            ]
+            'path': [[float(row['start_lon']), float(row['start_lat'])], [float(row['end_lon']), float(row['end_lat'])]],
+            'color': [min(255, int(row['popularity_rating'] * 25)), max(100, int(255 - row['popularity_rating'] * 20)), max(50, int(255 - row['popularity_rating'] * 25))]
         })
     view_state = pdk.ViewState(
         latitude=float(data['start_lat'].mean()),
@@ -80,24 +65,16 @@ def create_route_map(data, zoom=12):
         layers=[layer],
         initial_view_state=view_state,
         tooltip={
-            "html": "<b>Route ID:</b> {route_id}<br>"
-                   "<b>Popularity:</b> {popularity}/10<br>"
-                   "<b>Distinct Cyclists:</b> {cyclists}<br>"
-                   "<b>Active Days:</b> {days}",
-            "style": {
-                "backgroundColor": "white",
-                "color": "black"
-            }
+            "html": "<b>Route ID:</b> {route_id}<br><b>Popularity:</b> {popularity}/10<br><b>Distinct Cyclists:</b> {cyclists}<br><b>Active Days:</b> {days}",
+            "style": {"backgroundColor": "white", "color": "black"}
         }
     )
 
-def analyze_time_series(data, column='incidents'):
-    data = data.sort_values('date')
-    data = data.set_index('date')
+def analyze_time_series(data: pd.DataFrame, column: str = 'incidents'):
+    data = data.sort_values('date').set_index('date')
     decomposition = seasonal_decompose(data[column], model='additive', period=7)
     fig = make_subplots(
-        rows=4, 
-        cols=1,
+        rows=4, cols=1,
         subplot_titles=('Observed', 'Trend', 'Seasonal', 'Residual'),
         vertical_spacing=0.08,
         shared_xaxes=True
@@ -109,7 +86,7 @@ def analyze_time_series(data, column='incidents'):
     fig.update_layout(height=800, title_text=f"Time Series Decomposition of {column.title()}")
     return fig
 
-def detect_anomalies(data, column='incidents', contamination=0.05):
+def detect_anomalies(data: pd.DataFrame, column: str = 'incidents', contamination: float = 0.05):
     X = data[column].values.reshape(-1, 1)
     model = IsolationForest(contamination=contamination, random_state=42)
     data['anomaly'] = model.fit_predict(X)
@@ -138,9 +115,8 @@ def detect_anomalies(data, column='incidents', contamination=0.05):
     )
     return fig, data[data['anomaly'] == -1]
 
-def create_correlation_heatmap(data):
-    numeric_data = data.select_dtypes(include=[np.number])
-    corr_matrix = numeric_data.corr()
+def create_correlation_heatmap(data: pd.DataFrame):
+    corr_matrix = data.corr()
     fig = px.imshow(
         corr_matrix,
         text_auto=True,
