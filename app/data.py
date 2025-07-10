@@ -1,5 +1,5 @@
 import pandas as pd
-from app.utils import clean_column_names, to_datetime
+from utils import clean_column_names, to_datetime
 
 def load_data(filepath: str = "data/sample_cycling_data.csv") -> pd.DataFrame:
     """
