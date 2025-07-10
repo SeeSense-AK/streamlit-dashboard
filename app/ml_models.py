@@ -6,18 +6,20 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'assets', 'xgb_model.
 
 def load_xgb_model():
     """
-    Loads the pre-trained XGBoost model from disk.
+    Loads the pre-trained XGBoost Booster model from disk.
     Returns:
-        model: Loaded XGBoost model.
+        model: Loaded XGBoost Booster model.
     """
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
     model = joblib.load(MODEL_PATH)
     return model
 
 def predict_risk(model, X):
     """
-    Uses the loaded XGBoost model to make predictions.
+    Uses the loaded XGBoost Booster model to make predictions.
     Args:
-        model: Loaded XGBoost model.
+        model: Loaded XGBoost Booster model.
         X (pd.DataFrame): Feature dataframe.
     Returns:
         np.ndarray: Model predictions.
