@@ -27,15 +27,7 @@ data_option = st.sidebar.selectbox(
     ("Sample Data", "Upload CSV")
 )
 
-if data_option == "Upload CSV":
-    uploaded = st.sidebar.file_uploader("Upload your cycling data CSV", type=["csv"])
-    if uploaded:
-        data = pd.read_csv(uploaded)
-    else:
-        st.warning("Please upload a CSV file.")
-        st.stop()
-else:
-    data = load_data()
+data = load_data()
 
 # Tabs for different analyses
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
